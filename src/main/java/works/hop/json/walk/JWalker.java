@@ -43,6 +43,14 @@ public class JWalker {
                 step();
                 tokens.add(new Token(TokenType.END_IDX));
             }
+            else if(ch == '{'){
+                step();
+                tokens.add(new Token(TokenType.LEFT_CURLY));
+            }
+            else if(ch == '}') {
+                step();
+                tokens.add(new Token(TokenType.RIGHT_CURLY));
+            }
             else if(ch == '('){
                 step();
                 tokens.add(new Token(TokenType.OPEN_PAREN));

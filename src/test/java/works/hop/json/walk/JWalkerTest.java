@@ -4,10 +4,12 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import works.hop.json.api.JArray;
 import works.hop.json.api.JNode;
+import works.hop.json.api.JObject;
 import works.hop.json.api.JValue;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -305,30 +307,62 @@ class JWalkerTest {
         assertThat(result).isEqualTo("James");
     }
 
-//    @Test
-//    void multiselect_list() {
-//        String input = "{\n" +
-//                "  \"people\": [\n" +
-//                "    {\n" +
-//                "      \"name\": \"a\",\n" +
-//                "      \"state\": {\"name\": \"up\"}\n" +
-//                "    },\n" +
-//                "    {\n" +
-//                "      \"name\": \"b\",\n" +
-//                "      \"state\": {\"name\": \"down\"}\n" +
-//                "    },\n" +
-//                "    {\n" +
-//                "      \"name\": \"c\",\n" +
-//                "      \"state\": {\"name\": \"up\"}\n" +
-//                "    }\n" +
-//                "  ]\n" +
-//                "}";
-//
-//        JNode node = new JWalker(input).walk("people[].[name, state.name]");
-//        assertThat(node).isNotNull();
-//        List<String> values = node.value(JArray.class).stream().map(v -> v.value(String.class)).collect(Collectors.toList());
-//        assertThat(values).containsAll(List.of("b", "d"));
-//    }
+    @Test
+    void multiselect_list() {
+        String input = "{\n" +
+                "  \"people\": [\n" +
+                "    {\n" +
+                "      \"name\": \"a\",\n" +
+                "      \"state\": {\"name\": \"up\"}\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"name\": \"b\",\n" +
+                "      \"state\": {\"name\": \"down\"}\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"name\": \"c\",\n" +
+                "      \"state\": {\"name\": \"up\"}\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}";
+
+        JNode node = new JWalker(input).walk("people[].[name, state.name]");
+        assertThat(node).isNotNull();
+        List<List<String>> values = node.value(JArray.class).stream()
+                .map(v -> v.value(JArray.class).stream()
+                        .map(x -> x.value(String.class))
+                        .collect(Collectors.toList()))
+                .collect(Collectors.toList());
+        assertThat(values).containsAll(List.of(List.of("a", "up"), List.of("b", "down"), List.of("c", "up")));
+    }
+
+    @Test
+    void multiselect_hash() {
+        String input = "{\n" +
+                "  \"people\": [\n" +
+                "    {\n" +
+                "      \"name\": \"a\",\n" +
+                "      \"state\": {\"name\": \"up\"}\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"name\": \"b\",\n" +
+                "      \"state\": {\"name\": \"down\"}\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"name\": \"c\",\n" +
+                "      \"state\": {\"name\": \"up\"}\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}";
+
+        JNode node = new JWalker(input).walk("people[].{Name: name, State: state.name}");
+        assertThat(node).isNotNull();
+        List<Map<String, String>> values = node.value(JArray.class).stream()
+                .map(e -> e.value(JObject.class).keySet().stream()
+                        .collect(Collectors.toMap(k -> k, k -> e.value(JObject.class).get(k).value(String.class))))
+                .collect(Collectors.toList());
+        assertThat(values).containsAll(List.of(Map.of("Name", "a", "State", "up"), Map.of("Name", "b", "State", "down"), Map.of("Name", "c", "State", "up")));
+    }
 
     @Test
     void functions_abs() {

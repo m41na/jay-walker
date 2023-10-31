@@ -16,16 +16,16 @@ import java.util.stream.Stream;
 public class JEval {
 
     final List<Token> tokens;
-    final boolean filterNulls;
+    final boolean filterNull;
     int current = 0;
 
     public JEval(List<Token> tokens) {
         this(tokens, true);
     }
 
-    public JEval(List<Token> tokens, boolean filterNulls) {
+    public JEval(List<Token> tokens, boolean filterNull) {
         this.tokens = tokens;
-        this.filterNulls = filterNulls;
+        this.filterNull = filterNull;
     }
 
     public static boolean compareLessOrEqualTo(JNode value, String property, String literal) {
@@ -46,7 +46,7 @@ public class JEval {
         return actual.compareTo(expected) >= 0;
     }
 
-    public static boolean compareGreateThan(JNode value, String property, String literal) {
+    public static boolean compareGreaterThan(JNode value, String property, String literal) {
         BigDecimal expected = new BigDecimal(literal);
         BigDecimal actual = value.value(JObject.class).get(property).value(BigDecimal.class);
         return actual.compareTo(expected) > 0;
@@ -130,16 +130,84 @@ public class JEval {
 
                     if (before.type.equals(TokenType.START_IDX)) {
                         expectToken(TokenType.PERIOD);
-                        expectToken(TokenType.IDENTIFIER);
-                        String key = tokens.get(current).getValue().toString();
-                        return projectionFilter(root, key, true);
+                        if(Objects.requireNonNull(peek()).type == TokenType.IDENTIFIER) {
+                            // a case for projection
+                            expectToken(TokenType.IDENTIFIER);
+                            String key = tokens.get(current).getValue().toString();
+                            return projectionFilter(root, key, true);
+                        }
+                        if(Objects.requireNonNull(peek()).type == TokenType.START_IDX) {
+                            // a case for multiselect list -> creates and returns a list
+                            expectToken(TokenType.START_IDX);
+                            step();
+                            JArray multiList = new JArray();
+                            while(current < tokens.size() && tokens.get(current).type != TokenType.END_IDX) {
+                                List<Token> selector = new LinkedList<>();
+                                while (tokens.get(current).type != TokenType.COMMA &&
+                                        tokens.get(current).type != TokenType.END_IDX) {
+                                    selector.add(tokens.get(current));
+                                    step();
+                                }
+
+                                JArray array = root.value(JArray.class).stream()
+                                        .map(v -> new JEval(selector).evaluate(v))
+                                        .collect(Collectors.toCollection(JArray::new));
+
+                                for(int i = 0; i < root.value(JArray.class).size(); i++){
+                                    if(multiList.size() <= i){
+                                        multiList.add(new JValue(new JArray()));
+                                    }
+                                    multiList.get(i).value(JArray.class).add(array.get(i));
+                                }
+
+                                step();
+                            }
+                            return new JValue(multiList);
+                        }
+                        if(Objects.requireNonNull(peek()).type == TokenType.LEFT_CURLY) {
+                            // a case for multiselect hash -> creates and returns a hash
+                            expectToken(TokenType.LEFT_CURLY);
+                            step();
+                            JArray multiHash = new JArray();
+                            while(current < tokens.size() && tokens.get(current).type != TokenType.RIGHT_CURLY) {
+                                String identifier = tokens.get(current).getValue().toString();
+                                expectToken(TokenType.COLON);
+                                step();
+                                List<Token> selector = new LinkedList<>();
+                                while (tokens.get(current).type != TokenType.COMMA &&
+                                        tokens.get(current).type != TokenType.RIGHT_CURLY) {
+                                    selector.add(tokens.get(current));
+                                    step();
+                                }
+
+                                JArray array = root.value(JArray.class).stream()
+                                        .map(v -> {
+                                            JNode value = new JEval(selector).evaluate(v);
+                                            JObject obj = new JObject();
+                                            obj.put(identifier, value);
+                                            return new JValue(obj);
+                                        })
+                                        .collect(Collectors.toCollection(JArray::new));
+
+                                for(int i = 0; i < root.value(JArray.class).size(); i++){
+                                    if(multiHash.size() <= i){
+                                        multiHash.add(array.get(i));
+                                    }
+                                    else {
+                                        multiHash.get(i).value(JObject.class).putAll(array.get(i).value(JObject.class));
+                                    }
+                                }
+
+                                step();
+                            }
+                            return new JValue(multiHash);
+                        }
+                        // other unidentified scenario
+                        throw new RuntimeException(String.format("not-yet-identified scenario - token %s, value %s", token.type, token.value));
                     } else {
                         step();
                         return evaluate(root);
                     }
-                }
-                case COMMA: {
-                    //TODO - multiselect not fully implemented
                 }
                 case COLON: {
                     int length = root.value(JArray.class).size();
@@ -380,7 +448,7 @@ public class JEval {
                             new Token(TokenType.PERIOD)), selector.stream()).collect(Collectors.toCollection(LinkedList::new));
                     return new JEval(simulated, false).evaluate(value);
                 } else {
-
+                    //TODO map function not yet fully implemented
                 }
             }
             case MAX: {
@@ -437,7 +505,7 @@ public class JEval {
                         return applyFlatMap(node, key).stream();
                     }
                 })
-                .filter(v -> !filterNulls || Objects.nonNull(v))
+                .filter(v -> !filterNull || Objects.nonNull(v))
                 .collect(Collectors.toCollection(JArray::new));
     }
 
@@ -452,7 +520,7 @@ public class JEval {
                         return new JValue(applyMap(node, key));
                     }
                 })
-                .filter(v -> !filterNulls || Objects.nonNull(v))
+                .filter(v -> !filterNull || Objects.nonNull(v))
                 .collect(Collectors.toCollection(JArray::new));
     }
 
@@ -486,7 +554,7 @@ public class JEval {
             case NOT_EQUAL_TO:
                 return compareInequality(value, property, literal);
             case GREATER_THAN:
-                return compareGreateThan(value, property, literal);
+                return compareGreaterThan(value, property, literal);
             case GREATER_OR_EQUAL_TO:
                 return compareGreaterOrEqualTo(value, property, literal);
             case LESS_THAN:
