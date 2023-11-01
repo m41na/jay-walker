@@ -1,2 +1,4 @@
-package works.hop.json.asmdemo.parse;public class ClassPrinter {
+package works.hop.json.asmdemo.parse;
+
+public class ClassPrinter {
 }

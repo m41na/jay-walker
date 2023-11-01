@@ -449,6 +449,7 @@ public class JEval {
                     return new JEval(simulated, false).evaluate(value);
                 } else {
                     //TODO map function not yet fully implemented
+                    return new JEval(simulated, false).evaluate(value);
                 }
             }
             case MAX: {

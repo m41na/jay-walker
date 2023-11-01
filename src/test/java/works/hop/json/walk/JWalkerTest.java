@@ -477,7 +477,7 @@ class JWalkerTest {
     }
 
     @Test
-    @Disabled
+//    @Disabled
     void functions_map_using_list_projection() {
         String input = "[[1, 2, 3, [4]], [5, 6, 7, [8, 9]]]";
 
