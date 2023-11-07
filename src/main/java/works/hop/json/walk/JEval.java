@@ -129,6 +129,10 @@ public class JEval {
                     Token before = tokens.get(current - 1);
 
                     if (before.type.equals(TokenType.START_IDX)) {
+                        //TODO - what if there is not selector to create a projection with?
+
+
+
                         expectToken(TokenType.PERIOD);
                         if(Objects.requireNonNull(peek()).type == TokenType.IDENTIFIER) {
                             // a case for projection
@@ -449,7 +453,7 @@ public class JEval {
                     return new JEval(simulated, false).evaluate(value);
                 } else {
                     //TODO map function not yet fully implemented
-                    return new JEval(simulated, false).evaluate(value);
+                    return new JEval(selector, false).evaluate(node);
                 }
             }
             case MAX: {

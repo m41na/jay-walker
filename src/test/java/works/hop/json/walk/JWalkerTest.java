@@ -468,40 +468,6 @@ class JWalkerTest {
     }
 
     @Test
-    void functions_map_using_object_projection() {
-        String input = "{\"array\": [{\"foo\": \"a\"}, {\"foo\": \"b\"}, {}, [], {\"foo\": \"f\"}]}";
-
-        JNode node = new JWalker(input).walk("map(&foo, array)");
-        assertThat(node).isNotNull();
-        assertThat(node.value(JArray.class).stream().map(v -> v != null ? v.value(String.class) : null)).containsAll(List.of("a", "b", "f"));
-    }
-
-    @Test
-//    @Disabled
-    void functions_map_using_list_projection() {
-        String input = "[[1, 2, 3, [4]], [5, 6, 7, [8, 9]]]";
-
-        JNode node = new JWalker(input).walk("map(&[])");
-        assertThat(node).isNotNull();
-        assertThat(node.value(String.class)).isEqualTo("[[1, 2, 3, 4], [5, 6, 7, 8, 9]]");
-    }
-
-    @Test
-    void functions_max() {
-        String input = "{\"array\": [10, 15]}";
-
-        JNode node = new JWalker(input).walk("max(array)");
-        assertThat(node).isNotNull();
-        assertThat(node.value(BigDecimal.class).intValue()).isEqualTo(15);
-
-        String input2 = "[\"a\", \"b\"]";
-
-        JNode node2 = new JWalker(input2).walk("max()");
-        assertThat(node2).isNotNull();
-        assertThat(node2.value(String.class)).isEqualTo("b");
-    }
-
-    @Test
     void functions_length() {
         String input = "{\n" +
                 "  \"people\": [\n" +
@@ -527,5 +493,54 @@ class JWalkerTest {
         assertThat(node).isNotNull();
         int size = node.value(BigDecimal.class).intValue();
         assertThat(size).isEqualTo(3);
+    }
+
+    @Test
+    void functions_map_using_object_projection() {
+        String input = "{\"array\": [{\"foo\": \"a\"}, {\"foo\": \"b\"}, {}, [], {\"foo\": \"f\"}]}";
+
+        JNode node = new JWalker(input).walk("map(&foo, array)");
+        assertThat(node).isNotNull();
+        assertThat(node.value(JArray.class).stream().map(v -> v != null ? v.value(String.class) : null)).containsAll(List.of("a", "b", "f"));
+    }
+
+    @Test
+    @Disabled
+    void functions_map_using_list_projection() {
+        String input = "[[1, 2, 3, [4]], [5, 6, 7, [8, 9]]]";
+
+        JNode node = new JWalker(input).walk("map(&[])");
+        assertThat(node).isNotNull();
+        assertThat(node.value(String.class)).isEqualTo("[[1, 2, 3, 4], [5, 6, 7, 8, 9]]");
+    }
+
+    @Test
+    void functions_max() {
+        String input = "{\"array\": [10, 15]}";
+
+        JNode node = new JWalker(input).walk("max(array)");
+        assertThat(node).isNotNull();
+        assertThat(node.value(BigDecimal.class).intValue()).isEqualTo(15);
+
+        String input2 = "[\"a\", \"b\"]";
+
+        JNode node2 = new JWalker(input2).walk("max()");
+        assertThat(node2).isNotNull();
+        assertThat(node2.value(String.class)).isEqualTo("b");
+    }
+
+    @Test
+    void functions_max_by() {
+        String input = "{\"array\": [10, 15]}";
+
+        JNode node = new JWalker(input).walk("max(array)");
+        assertThat(node).isNotNull();
+        assertThat(node.value(BigDecimal.class).intValue()).isEqualTo(15);
+
+        String input2 = "[\"a\", \"b\"]";
+
+        JNode node2 = new JWalker(input2).walk("max()");
+        assertThat(node2).isNotNull();
+        assertThat(node2.value(String.class)).isEqualTo("b");
     }
 }
