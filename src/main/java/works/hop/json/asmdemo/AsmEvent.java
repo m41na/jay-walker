@@ -14,7 +14,7 @@ public interface AsmEvent {
 
     Object value();
 
-    <T>T value(Class<T> type);
+    <T> T value(Class<T> type);
 
     <V, T> T value(Function<V, T> converter);
 

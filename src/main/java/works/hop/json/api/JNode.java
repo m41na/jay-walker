@@ -10,7 +10,7 @@ public interface JNode {
 
     Object value();
 
-    default boolean is(Class<?> type){
+    default boolean is(Class<?> type) {
         return type == value().getClass();
     }
 

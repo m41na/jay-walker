@@ -13,7 +13,7 @@ import java.util.function.Function;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
-public class JValue implements JNode{
+public class JValue implements JNode {
 
     Object value;
 
@@ -34,7 +34,7 @@ public class JValue implements JNode{
 
     @Override
     public <T> T value(Class<T> type) {
-        if(value != null) {
+        if (value != null) {
             return type.cast(value);
         }
         return null;
@@ -42,7 +42,7 @@ public class JValue implements JNode{
 
     @Override
     public <A, R> R value(Function<A, R> converter) {
-        if(value != null) {
+        if (value != null) {
             return converter.apply((A) value);
         }
         return null;

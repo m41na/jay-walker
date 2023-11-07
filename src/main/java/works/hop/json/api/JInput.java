@@ -10,7 +10,7 @@ import java.util.function.Function;
 public interface JInput extends Function<String, JNode> {
 
     default JNode resource(String fileName) {
-        try{
+        try {
             String content = Files.readString(Paths.get(Objects.requireNonNull(JInput.class.getClassLoader().getResource(fileName)).toURI()));
             return apply(content);
         } catch (IOException | URISyntaxException e) {

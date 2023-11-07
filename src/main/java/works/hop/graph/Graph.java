@@ -43,7 +43,7 @@ public class Graph {
     }
 
     public void traverse(Node start, Node end) {
-        if(!start.isVisited()) {
+        if (!start.isVisited()) {
             start.setVisited(true);
             for (Edge edge : start.getEdges()) {
                 Node node = edge.getNode();

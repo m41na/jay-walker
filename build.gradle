@@ -27,6 +27,9 @@ dependencies {
     implementation 'ch.qos.logback:logback-core:1.4.11'
     implementation 'ch.qos.logback:logback-classic:1.4.11'
 
+    // command-line options
+    implementation 'commons-cli:commons-cli:1.4'
+
     // asmdemo - bytecode
     implementation 'org.ow2.asm:asm:7.3.1'
 
@@ -45,4 +48,15 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+jar {
+    manifest {
+        attributes "Main-Class": "works.hop.json.demo.Demo"
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    archiveBaseName = "jjq"
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
 }

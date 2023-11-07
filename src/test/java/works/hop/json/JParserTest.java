@@ -15,6 +15,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class JParserTest {
 
+    private static void assertParsedJsonContent(JNode root) {
+        assertThat(root).isNotNull();
+        assertThat(root
+                .value(JObject.class).get("phoneNumbers")
+                .value(JArray.class).get(0)
+                .value(JObject.class).get("number")
+                .value(String.class)).isEqualTo("212 555-1234");
+        assertThat(root
+                .value(JObject.class).get("address")
+                .value(JObject.class).get("ext")).isNull();
+    }
+
     @Test
     void parse_should_return_valid_map() throws URISyntaxException, IOException {
         String input = Files.readString(
@@ -28,17 +40,5 @@ public class JParserTest {
     void parse_static_should_return_valid_map() throws URISyntaxException, IOException {
         JNode root = JParser.parse("input.json");
         assertParsedJsonContent(root);
-    }
-
-    private static void assertParsedJsonContent(JNode root) {
-        assertThat(root).isNotNull();
-        assertThat(root
-                .value(JObject.class).get("phoneNumbers")
-                .value(JArray.class).get(0)
-                .value(JObject.class).get("number")
-                .value(String.class)).isEqualTo("212 555-1234");
-        assertThat(root
-                .value(JObject.class).get("address")
-                .value(JObject.class).get("ext")).isNull();
     }
 }

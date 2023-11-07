@@ -16,13 +16,13 @@ public enum BuiltIn {
         this.symbol = symbol;
     }
 
-    public static List<String> functions(){
+    public static List<String> functions() {
         return Arrays.stream(values()).map(v -> v.symbol).collect(Collectors.toList());
     }
 
     public static BuiltIn of(String function) {
-        for(BuiltIn type : values()){
-            if(type.symbol.equals(function)){
+        for (BuiltIn type : values()) {
+            if (type.symbol.equals(function)) {
                 return type;
             }
         }

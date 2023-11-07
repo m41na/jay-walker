@@ -132,20 +132,19 @@ public class JEval {
                         //TODO - what if there is not selector to create a projection with?
 
 
-
                         expectToken(TokenType.PERIOD);
-                        if(Objects.requireNonNull(peek()).type == TokenType.IDENTIFIER) {
+                        if (Objects.requireNonNull(peek()).type == TokenType.IDENTIFIER) {
                             // a case for projection
                             expectToken(TokenType.IDENTIFIER);
                             String key = tokens.get(current).getValue().toString();
                             return projectionFilter(root, key, true);
                         }
-                        if(Objects.requireNonNull(peek()).type == TokenType.START_IDX) {
+                        if (Objects.requireNonNull(peek()).type == TokenType.START_IDX) {
                             // a case for multiselect list -> creates and returns a list
                             expectToken(TokenType.START_IDX);
                             step();
                             JArray multiList = new JArray();
-                            while(current < tokens.size() && tokens.get(current).type != TokenType.END_IDX) {
+                            while (current < tokens.size() && tokens.get(current).type != TokenType.END_IDX) {
                                 List<Token> selector = new LinkedList<>();
                                 while (tokens.get(current).type != TokenType.COMMA &&
                                         tokens.get(current).type != TokenType.END_IDX) {
@@ -157,8 +156,8 @@ public class JEval {
                                         .map(v -> new JEval(selector).evaluate(v))
                                         .collect(Collectors.toCollection(JArray::new));
 
-                                for(int i = 0; i < root.value(JArray.class).size(); i++){
-                                    if(multiList.size() <= i){
+                                for (int i = 0; i < root.value(JArray.class).size(); i++) {
+                                    if (multiList.size() <= i) {
                                         multiList.add(new JValue(new JArray()));
                                     }
                                     multiList.get(i).value(JArray.class).add(array.get(i));
@@ -168,12 +167,12 @@ public class JEval {
                             }
                             return new JValue(multiList);
                         }
-                        if(Objects.requireNonNull(peek()).type == TokenType.LEFT_CURLY) {
+                        if (Objects.requireNonNull(peek()).type == TokenType.LEFT_CURLY) {
                             // a case for multiselect hash -> creates and returns a hash
                             expectToken(TokenType.LEFT_CURLY);
                             step();
                             JArray multiHash = new JArray();
-                            while(current < tokens.size() && tokens.get(current).type != TokenType.RIGHT_CURLY) {
+                            while (current < tokens.size() && tokens.get(current).type != TokenType.RIGHT_CURLY) {
                                 String identifier = tokens.get(current).getValue().toString();
                                 expectToken(TokenType.COLON);
                                 step();
@@ -193,11 +192,10 @@ public class JEval {
                                         })
                                         .collect(Collectors.toCollection(JArray::new));
 
-                                for(int i = 0; i < root.value(JArray.class).size(); i++){
-                                    if(multiHash.size() <= i){
+                                for (int i = 0; i < root.value(JArray.class).size(); i++) {
+                                    if (multiHash.size() <= i) {
                                         multiHash.add(array.get(i));
-                                    }
-                                    else {
+                                    } else {
                                         multiHash.get(i).value(JObject.class).putAll(array.get(i).value(JObject.class));
                                     }
                                 }

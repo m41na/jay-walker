@@ -1,15 +1,10 @@
 package works.hop.json;
 
 import lombok.RequiredArgsConstructor;
-import works.hop.json.api.JArray;
-import works.hop.json.api.JInput;
-import works.hop.json.api.JNode;
-import works.hop.json.api.JObject;
-import works.hop.json.api.JValue;
+import works.hop.json.api.*;
 
 import javax.json.Json;
 import javax.json.stream.JsonParser;
-
 import java.io.StringReader;
 import java.util.Stack;
 
@@ -18,7 +13,7 @@ public class JParser {
 
     final String input;
 
-    public static JNode parse(String filePath){
+    public static JNode parse(String filePath) {
         JInput input = (content) -> new JParser(content).parse();
         return input.resource(filePath);
     }

@@ -18,115 +18,92 @@ public class JWalker {
         this.root = new JParser(input).parse();
     }
 
-    public JNode walk(String path){
+    public JNode walk(String path) {
         this.path = path;
         List<Token> tokens = new LinkedList<>();
 
-        while(current < path.length()){
+        while (current < path.length()) {
             char ch = path.charAt(current);
-            if(Character.isWhitespace(ch)){
+            if (Character.isWhitespace(ch)) {
                 step();
-            }
-            else if(ch == ','){
+            } else if (ch == ',') {
                 step();
                 tokens.add(new Token(TokenType.COMMA));
-            }
-            else if(ch == '.'){
+            } else if (ch == '.') {
                 step();
                 tokens.add(new Token(TokenType.PERIOD));
-            }
-            else if(ch == '['){
+            } else if (ch == '[') {
                 step();
                 tokens.add(new Token(TokenType.START_IDX));
-            }
-            else if(ch == ']') {
+            } else if (ch == ']') {
                 step();
                 tokens.add(new Token(TokenType.END_IDX));
-            }
-            else if(ch == '{'){
+            } else if (ch == '{') {
                 step();
                 tokens.add(new Token(TokenType.LEFT_CURLY));
-            }
-            else if(ch == '}') {
+            } else if (ch == '}') {
                 step();
                 tokens.add(new Token(TokenType.RIGHT_CURLY));
-            }
-            else if(ch == '('){
+            } else if (ch == '(') {
                 step();
                 tokens.add(new Token(TokenType.OPEN_PAREN));
-            }
-            else if(ch == ')') {
+            } else if (ch == ')') {
                 step();
                 tokens.add(new Token(TokenType.CLOSE_PAREN));
-            }
-            else if (ch == ':'){
+            } else if (ch == ':') {
                 step();
                 tokens.add(new Token(TokenType.COLON));
-            }
-            else if (ch == '*'){
+            } else if (ch == '*') {
                 step();
                 tokens.add(new Token(TokenType.STAR));
-            }
-            else if (ch == '?'){
+            } else if (ch == '?') {
                 step();
                 tokens.add(new Token(TokenType.QUESTION_MARK));
-            }
-            else if (ch == '|'){
+            } else if (ch == '|') {
                 step();
                 tokens.add(new Token(TokenType.PIPE));
-            }
-            else if (ch == '&'){
+            } else if (ch == '&') {
                 step();
                 tokens.add(new Token(TokenType.AMPERSAND));
-            }
-            else if(Character.isAlphabetic(ch) || ch == '_'){
+            } else if (Character.isAlphabetic(ch) || ch == '_') {
                 identifier(tokens);
-            }
-            else if(Character.isDigit(ch)){
+            } else if (Character.isDigit(ch)) {
                 BigDecimal number = numeral();
                 tokens.add(new Token(TokenType.NUMBER, number));
-            }
-            else if (ch == '\''){
+            } else if (ch == '\'') {
                 String literal = literal();
                 tokens.add(new Token(TokenType.LITERAL, literal));
-            }
-            else if (ch == '='){
-                if(peek() == '=') {
+            } else if (ch == '=') {
+                if (peek() == '=') {
                     step();
                     tokens.add(new Token(TokenType.EQUAL_TO));
                 }
                 step();
                 System.out.printf("skipping unexpected character after '=' - '%s'\n", ch);
-            }
-            else if (ch == '!'){
-                if(peek() == '=') {
+            } else if (ch == '!') {
+                if (peek() == '=') {
                     step();
                     tokens.add(new Token(TokenType.NOT_EQUAL_TO));
                 }
                 step();
                 System.out.printf("skipping unexpected character after '!' - '%s'\n", ch);
-            }
-            else if (ch == '>'){
-                if(peek() == '=') {
+            } else if (ch == '>') {
+                if (peek() == '=') {
                     step();
                     tokens.add(new Token(TokenType.GREATER_OR_EQUAL_TO));
-                }
-                else {
+                } else {
                     step();
                     tokens.add(new Token(TokenType.GREATER_THAN));
                 }
-            }
-            else if (ch == '<'){
-                if(peek() == '=') {
+            } else if (ch == '<') {
+                if (peek() == '=') {
                     step();
                     tokens.add(new Token(TokenType.LESS_OR_EQUAL_TO));
-                }
-                else {
+                } else {
                     step();
                     tokens.add(new Token(TokenType.LESS_THAN));
                 }
-            }
-            else {
+            } else {
                 step();
                 System.out.printf("skipping unexpected character - '%s'\n", ch);
             }
@@ -157,15 +134,14 @@ public class JWalker {
 
     private void identifier(List<Token> tokens) {
         int start = current;
-        while(hasMore() && (Character.isLetterOrDigit(peek()) || peek() == '_')){
+        while (hasMore() && (Character.isLetterOrDigit(peek()) || peek() == '_')) {
             step();
         }
         step();
         var value = this.path.substring(start, current);
-        if(BuiltIn.functions().contains(value)){
+        if (BuiltIn.functions().contains(value)) {
             tokens.add(new Token(TokenType.FUNCTION, BuiltIn.of(value)));
-        }
-        else{
+        } else {
             tokens.add(new Token(TokenType.IDENTIFIER, value));
         }
     }
@@ -173,7 +149,7 @@ public class JWalker {
     private String literal() {
         int start = current;
         step();
-        while(hasMore() && path.charAt(current) != '\'' && prev() != '\\'){
+        while (hasMore() && path.charAt(current) != '\'' && prev() != '\\') {
             step();
         }
         step();
@@ -183,10 +159,10 @@ public class JWalker {
     private BigDecimal numeral() {
         int start = current;
 
-        while (hasMore() && Character.isDigit(peek()) || peek() == '.'){
+        while (hasMore() && Character.isDigit(peek()) || peek() == '.') {
             step();
             char ch = path.charAt(current);
-            if(ch == '.' && !Character.isDigit(peek())){
+            if (ch == '.' && !Character.isDigit(peek())) {
                 throw new RuntimeException("Expected a digit character after the decimal point");
             }
         }
