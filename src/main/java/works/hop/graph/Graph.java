@@ -14,6 +14,10 @@ public class Graph {
         }
     }
 
+    public void addEdge(Node from, Node to) {
+        this.addEdge(from, to, 0, false);
+    }
+
     public void addEdge(Node from, Node to, int weight) {
         this.addEdge(from, to, weight, false);
     }
@@ -99,7 +103,7 @@ public class Graph {
         return visited;
     }
 
-    public List<Node> findPath(Node start, Node end, List<Node> visited) {
+    public List<Node> path(Node start, Node end, List<Node> visited) {
         Node last = end;
         List<Node> path = new LinkedList<>();
         path.add(end);
@@ -117,5 +121,53 @@ public class Graph {
         }
         path.add(start);
         return path;
+    }
+
+    public void topSort(Node start, List<Node> path, List<Node> visited) {
+        for (Edge edge : start.getEdges()) {
+            Node node = edge.getNode();
+            if (!visited.contains(node)) {
+                visited.add(node);
+                topSort(node, path, visited);
+                path.add(node);
+            }
+        }
+    }
+
+    public void mst(Node start, List<Node> tree, List<Node> visited) {
+
+    }
+
+    public List<Node> dijkstra(Node start, Node end) {
+        List<Node> visited = new LinkedList<>();
+        Map<Node, Integer> weights = vertices.stream().collect(Collectors.toMap(v -> v, v -> Integer.MAX_VALUE));
+        PriorityQueue<Trail> queue = new PriorityQueue<>();
+        queue.add(new Trail(start, 0));
+        while (!queue.isEmpty()) {
+            Trail head = queue.poll();
+            Node node = head.current;
+            weights.put(node, head.distance);
+            if (node.equals(end)) {
+                break;
+            }
+            for (Edge edge : node.getEdges()) {
+                Node next = edge.getNode();
+                if(!visited.contains(next)) {
+                    next.setDepth(node.getDepth() + 1);
+                    int currentDist = weights.get(next);
+                    int nextDist = head.distance + edge.weight;
+                    if (nextDist < currentDist) {
+                        queue.add(new Trail(next, nextDist, node));
+                        weights.put(next, nextDist);
+                    } else {
+                        queue.add(new Trail(next, currentDist, node));
+                    }
+                }
+            }
+
+            // remove from consideration
+            visited.add(node);
+        }
+        return new LinkedList<>(weights.keySet());
     }
 }
