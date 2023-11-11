@@ -1,8 +1,17 @@
 package works.hop.graph;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+/**
+ * shortest path algorithms
+ * 1. bfs
+ * 2. dijkstras
+ * 3. bellman-ford
+ * 4. floyd-warshall
+ */
 public class Graph {
 
     final List<Node> vertices = new LinkedList<>();
@@ -10,7 +19,7 @@ public class Graph {
 
     public void addNode(Node node) {
         if (!this.vertices.contains(node)) {
-            this.vertices.add(node);
+            this.vertices.add(Objects.requireNonNull(node));
         }
     }
 
@@ -46,16 +55,27 @@ public class Graph {
         }
     }
 
-    public void traverse(Node start, Node end) {
-        if (!start.isVisited()) {
-            start.setVisited(true);
+    public void depth_first_post_order_traversal(Node start, Consumer<Node> callback, List<Node> visited) {
+        if (!visited.contains(start)) {
+            visited.add(start);
             for (Edge edge : start.getEdges()) {
                 Node node = edge.getNode();
-                if (!node.isVisited()) {
-                    if (node == end) {
-                        break;
-                    }
-                    traverse(node, end);
+                if (!visited.contains((node))) {
+                    depth_first_post_order_traversal(node, callback, visited);
+                    callback.accept(node);
+                }
+            }
+        }
+    }
+
+    public void depth_first_pre_order_traversal(Node start, Consumer<Node> callback, List<Node> visited) {
+        if (!visited.contains(start)) {
+            visited.add(start);
+            for (Edge edge : start.getEdges()) {
+                Node node = edge.getNode();
+                if (!visited.contains((node))) {
+                    callback.accept(node);
+                    depth_first_pre_order_traversal(node, callback, visited);
                 }
             }
         }
@@ -67,17 +87,21 @@ public class Graph {
         stack.add(start);
         while (!stack.isEmpty()) {
             Node node = stack.pop();
-            visited.add(node);
             if (node == end) {
                 break;
             }
+            if (visited.contains(node)) {
+                // necessary check to avoid duplication in the stack
+                continue;
+            }
             for (Edge edge : node.getEdges()) {
                 Node next = edge.getNode();
-                if (!visited.contains(next) && !stack.contains(next)) {
+                if (!visited.contains(next)) {
                     next.setDepth(node.getDepth() + 1);
                     stack.add(next);
                 }
             }
+            visited.add(node);
         }
         return visited;
     }
@@ -88,9 +112,12 @@ public class Graph {
         queue.add(start);
         while (!queue.isEmpty()) {
             Node node = queue.poll();
-            visited.add(node);
             if (node == end) {
                 break;
+            }
+            if (visited.contains(node)) {
+                // necessary check to avoid duplication in the queue
+                continue;
             }
             for (Edge edge : node.getEdges()) {
                 Node next = edge.getNode();
@@ -99,6 +126,7 @@ public class Graph {
                     queue.add(next);
                 }
             }
+            visited.add(node);
         }
         return visited;
     }
@@ -112,7 +140,6 @@ public class Graph {
             if (node.getDepth() >= last.getDepth()) {
                 continue;
             }
-
             List<Node> adj = node.getEdges().stream().map(Edge::getNode).collect(Collectors.toList());
             if (adj.contains(last)) {
                 path.add(node);
@@ -123,51 +150,115 @@ public class Graph {
         return path;
     }
 
-    public void topSort(Node start, List<Node> path, List<Node> visited) {
-        for (Edge edge : start.getEdges()) {
-            Node node = edge.getNode();
-            if (!visited.contains(node)) {
-                visited.add(node);
-                topSort(node, path, visited);
-                path.add(node);
+    public List<Node> dag_topological_sort() {
+        List<Node> sorted = new LinkedList<>();
+        List<Node> visited = new LinkedList<>();
+        for (Node node : vertices) {
+            depth_first_post_order_traversal(node, next -> sorted.add(0, next), visited);
+            if (!sorted.contains(node)) {
+                sorted.add(0, node);
             }
         }
+        return sorted;
     }
 
-    public void mst(Node start, List<Node> tree, List<Node> visited) {
+    public List<Node> shortest_path_unweighted_bfs(Node start, Node end) {
+        Map<Node, Trail> weights = vertices.stream().collect(Collectors.toMap(
+                node -> node,
+                node -> new Trail(node, Integer.MIN_VALUE)
+        ));
 
-    }
-
-    public List<Node> dijkstra(Node start, Node end) {
-        List<Node> visited = new LinkedList<>();
-        Map<Node, Integer> weights = vertices.stream().collect(Collectors.toMap(v -> v, v -> Integer.MAX_VALUE));
-        PriorityQueue<Trail> queue = new PriorityQueue<>();
-        queue.add(new Trail(start, 0));
+        Queue<Trail> queue = new LinkedList<>();
+        Trail startNode = weights.get(start);
+        startNode.setDistance(0);
+        startNode.setPrev(start);
+        queue.add(startNode);
         while (!queue.isEmpty()) {
             Trail head = queue.poll();
             Node node = head.current;
-            weights.put(node, head.distance);
-            if (node.equals(end)) {
-                break;
-            }
             for (Edge edge : node.getEdges()) {
                 Node next = edge.getNode();
-                if(!visited.contains(next)) {
-                    next.setDepth(node.getDepth() + 1);
-                    int currentDist = weights.get(next);
-                    int nextDist = head.distance + edge.weight;
-                    if (nextDist < currentDist) {
-                        queue.add(new Trail(next, nextDist, node));
-                        weights.put(next, nextDist);
-                    } else {
-                        queue.add(new Trail(next, currentDist, node));
+                Trail nextNode = weights.get(next);
+                if (!nextNode.visited) {
+                    int currentDist = head.distance + 1;
+                    nextNode.setDistance(currentDist);
+                    nextNode.setPrev(node);
+
+                    if (queue.stream().noneMatch(t -> t == nextNode)) {
+                        // necessary check to avoid duplication in the queue
+                        queue.add(nextNode);
                     }
                 }
             }
-
-            // remove from consideration
-            visited.add(node);
+            // remove from further consideration
+            weights.get(node).setVisited(true);
         }
-        return new LinkedList<>(weights.keySet());
+        // recreate the shortest path
+        return tracePath(weights, end, start);
+    }
+
+    public List<Node> shortest_path_weighted_dijkstra(Node start, Node end) {
+        Map<Node, Trail> weights = vertices.stream().collect(Collectors.toMap(
+                node -> node,
+                node -> new Trail(node, Integer.MAX_VALUE)
+        ));
+
+        PriorityQueue<Trail> queue = new PriorityQueue<>();
+        Trail startNode = weights.get(start);
+        startNode.setDistance(0);
+        queue.add(startNode);
+        while (!queue.isEmpty()) {
+            Trail head = queue.poll();
+            Node node = head.current;
+            for (Edge edge : node.getEdges()) {
+                Node next = edge.getNode();
+                Trail nextNode = weights.get(next);
+                if (!nextNode.visited) {
+                    int nextDist = nextNode.distance;
+                    int currentDist = head.distance + edge.weight;
+                    if (currentDist < nextDist) {
+                        nextNode.setDistance(currentDist);
+                        nextNode.setPrev(node);
+                    }
+                    if (queue.stream().noneMatch(t -> t == nextNode)) {
+                        // necessary check to avoid duplication in the queue
+                        queue.add(nextNode);
+                    }
+                }
+            }
+            // remove from further consideration
+            weights.get(node).setVisited(true);
+        }
+        // recreate the shortest path
+        return tracePath(weights, end, start);
+    }
+
+    private List<Node> tracePath(Map<Node, Trail> weights, Node end, Node start) {
+        Trail tail = weights.get(end);
+        List<Node> path = new LinkedList<>();
+        while (tail.current != start) {
+            path.add(tail.current);
+            tail = weights.get(tail.prev);
+        }
+        path.add(start);
+        return path;
+    }
+
+    public void minimum_spanning_tree(Node start, List<Node> tree, List<Node> visited){
+
+    }
+
+    public void bridges_and_articulation_points(Node start, List<List<Node>> bridges) {
+        Map<Integer, Trail> weights = IntStream.range(0, vertices.size())
+                .mapToObj(i -> new Trail(vertices.get(i), i))
+                .collect(Collectors.toMap(
+                node -> node.distance,
+                node -> node
+        ));
+
+        List<Node> visited = new LinkedList<>();
+        depth_first_pre_order_traversal(weights.get(0).current, node -> {
+            System.out.println(node.name);
+        }, visited);
     }
 }

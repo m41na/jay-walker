@@ -13,7 +13,6 @@ public class Node {
     final List<Edge> edges = new LinkedList<>();
     String name;
     int depth = 0;
-    boolean visited = false;
 
     public Node(String name) {
         this.name = name;

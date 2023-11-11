@@ -14,6 +14,7 @@ public class Trail implements Comparable<Trail> {
     Node current;
     Integer distance = Integer.MAX_VALUE;
     Node prev;
+    boolean visited = false;
 
     public Trail(Node current, int distance) {
         this.current = current;
