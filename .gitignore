@@ -114,3 +114,4 @@ Docker*
 
 ## Git credentials
 .git_credentials
+.env
